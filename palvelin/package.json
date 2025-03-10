@@ -1,0 +1,12 @@
+{
+  "name": "palvelin",
+  "version": "1.0.0",
+  "description": "",
+  "license": "",
+  "author": "",
+  "type": "commonjs",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js"
+  }
+}
