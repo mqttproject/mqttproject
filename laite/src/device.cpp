@@ -66,8 +66,6 @@ void device::connect_to_network()
         return;
     }
 
-    // create co-routine for receiving data
-
     std::cout << "Connected to server at " << server_ip << " on port " << port << "\n";
     close(sockfd);
     clean_virtual_ip();
