@@ -1,12 +1,17 @@
 {
   "name": "palvelin",
   "version": "1.0.0",
-  "description": "",
-  "license": "",
+  "license": "ISC",
   "author": "",
   "type": "commonjs",
   "main": "main.js",
   "scripts": {
     "start": "node main.js"
+  },
+  "description": "",
+  "dependencies": {
+    "aedes": "^0.51.3",
+    "mqtt": "^5.10.4",
+    "net": "^1.0.2"
   }
 }

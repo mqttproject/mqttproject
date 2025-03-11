@@ -17,4 +17,5 @@ public:
 private:
     mqtt::async_client client;
     bool connected;
+    std::string client_id;
 };

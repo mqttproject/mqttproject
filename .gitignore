@@ -1,3 +1,6 @@
 palvelin/node_modules
 laite/build
 laite/.vscode
+.vscode
+.gitignore
+palvelin/package.json

@@ -10,7 +10,6 @@ mqtt_client::~mqtt_client()
         client.disconnect()->wait();
     }
 }
-
 bool mqtt_client::connect()
 {
     if (connected)
@@ -21,7 +20,6 @@ bool mqtt_client::connect()
 
     try
     {
-        std::cout << "Connecting to MQTT server...\n";
         client.connect()->wait();
         connected = true;
         std::cout << "Connected to MQTT server.\n";
@@ -78,26 +76,10 @@ bool mqtt_client::subscribe(std::string topic, int qos)
     }
 }
 
-void mqtt_client::wait_for_messages()
-{
-    try
-    {
-        while (true)
-        {
-            client.start_consuming();
-        }
-    }
-    catch (const mqtt::exception &e)
-    {
-        std::cerr << "Error while waiting for messages: " << e.what() << std::endl;
-    }
-}
-
 void mqtt_client::disconnect()
 {
     if (connected)
     {
-        std::cout << "Disconnecting from MQTT server...\n";
         client.disconnect()->wait();
         connected = false;
         std::cout << "Disconnected from MQTT server.\n";
@@ -107,4 +89,15 @@ void mqtt_client::disconnect()
 bool mqtt_client::is_connected()
 {
     return connected;
+}
+void mqtt_client::wait_for_messages()
+{
+    try
+    {
+        client.start_consuming();
+    }
+    catch (const mqtt::exception &e)
+    {
+        std::cerr << "Error while waiting for messages: " << e.what() << std::endl;
+    }
 }
