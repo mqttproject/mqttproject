@@ -1,3 +1,6 @@
+#ifndef MQTT_CLIENT_HPP
+#define MQTT_CLIENT_HPP
+
 #include <iostream>
 #include <string>
 #include "mqtt/async_client.h"
@@ -19,3 +22,5 @@ private:
     bool connected;
     std::string client_id;
 };
+
+#endif

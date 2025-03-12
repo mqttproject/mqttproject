@@ -1,4 +1,4 @@
-#include "mqtt_client.h"
+#include "mqtt_client.hpp"
 
 mqtt_client::mqtt_client(std::string server_uri, std::string client_id)
     : client(server_uri, client_id), connected(false) {}
