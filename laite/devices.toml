@@ -1,0 +1,11 @@
+[devices]
+
+[devices.coffee]
+id = "coffee"
+action = "coffeeAction"
+broker = "tcp://localhost:1883"
+
+[devices.coffee2]
+id = "coffee2"
+action = "coffeeAction"
+broker = "tcp://localhost:1883"
