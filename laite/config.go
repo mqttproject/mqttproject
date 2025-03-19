@@ -10,7 +10,12 @@ type confDevice struct {
 	Action string `toml:"action"`
 	Broker string `toml:"broker"`
 }
+type confGeneral struct{
+	INTERFACE string `toml:"interface"`
+}
+
 type Config struct {
+	General confGeneral          `toml:"general"`
 	Devices map[string]confDevice `toml:"devices"` 
 }
 var actionMap = map[string]DeviceAction{
@@ -18,12 +23,15 @@ var actionMap = map[string]DeviceAction{
 }
 
 
-func loadDevicesFromFile(filePath string) (map[string]confDevice, error) {
+func loadConf(filePath string) (confGeneral, map[string]confDevice, error) {
 	var config Config
 	_, err := toml.DecodeFile(filePath, &config)
 	if err != nil {
-		return nil, err
+		return confGeneral{}, nil, err
 	}
+
+	generalConfig := config.General
+
 	devicesConfig := make(map[string]confDevice)
 	for id, deviceConfig := range config.Devices {
 		_, found := actionMap[deviceConfig.Action]
@@ -33,10 +41,10 @@ func loadDevicesFromFile(filePath string) (map[string]confDevice, error) {
 		}
 		devicesConfig[id] = confDevice{
 			ID:     deviceConfig.ID,
-			Action: deviceConfig.Action, 
+			Action: deviceConfig.Action,
 			Broker: deviceConfig.Broker,
 		}
 	}
 
-	return devicesConfig, nil
+	return generalConfig, devicesConfig, nil
 }

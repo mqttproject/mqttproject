@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"net"
+	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
@@ -16,23 +18,32 @@ type Device struct {
 	context context.Context;   
 }
 
-func createClient(id string,broker string) mqtt.Client{
 
+
+
+func createClient(id string, broker string,deviceInterface string) mqtt.Client {
 	opts := mqtt.NewClientOptions()
-	opts.AddBroker(broker) 
-	opts.SetClientID(id)      
+	opts.AddBroker(broker)
+	opts.SetClientID(id)
+	localIP := net.ParseIP(createVirtualIP(deviceInterface))
+	dialer := &net.Dialer{
+		Timeout:       time.Second * 10, 
+		LocalAddr: &net.TCPAddr{IP: localIP},            
+		KeepAlive:     time.Second * 30, 
+	}
 
-	
+	opts.SetDialer(dialer)
 	newClient := mqtt.NewClient(opts)
 	return newClient
 }
 
 
-func createDevice(id string,broker string ,action DeviceAction) Device {
+
+func createDevice(id string,broker string ,action DeviceAction,deviceInterface string) Device {
 	fmt.Println("Creating a device");
 	ctx, cancel := context.WithCancel(context.Background())
 	newDevice := Device{
-		client: createClient(id,broker),
+		client: createClient(id,broker,deviceInterface),
 		on:false,
 		action: action,
 		cancel:cancel,

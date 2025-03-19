@@ -3,15 +3,17 @@ const net = require('net');
 const { setTimeout } = require('timers');
 
 const PORT = 1883;
+const IP_ADDRESS = '0.0.0.0';
 
 const server = net.createServer(aedes.handle);
 
-server.listen(PORT, function () {
-    console.log(`MQTT broker started on port ${PORT}`);
+server.listen(PORT, IP_ADDRESS, function () {
+    console.log(`MQTT broker started on ${IP_ADDRESS}:${PORT}`);
 });
 
 aedes.on('client', function (client) {
-    console.log(`\nClient connected: ${client.id}`);
+    const clientIp = client.conn.remoteAddress;
+    console.log(`Client connected from IP: ${clientIp}, Client ID: ${client.id}`);
     const message = "Moi!";
     const topic = `devices/${client.id}/message`;
     sendToClient(client, topic, message);
