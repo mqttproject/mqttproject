@@ -5,23 +5,25 @@ import (
 
 	"github.com/BurntSushi/toml"
 )
+
 type confDevice struct {
 	ID     string `toml:"id"`
 	Action string `toml:"action"`
 	Broker string `toml:"broker"`
 }
-type confGeneral struct{
+type confGeneral struct {
 	INTERFACE string `toml:"interface"`
 }
 
 type Config struct {
-	General confGeneral          `toml:"general"`
-	Devices map[string]confDevice `toml:"devices"` 
-}
-var actionMap = map[string]DeviceAction{
-	"coffeeAction": coffeeAction,
+	General confGeneral           `toml:"general"`
+	Devices map[string]confDevice `toml:"devices"`
 }
 
+var actionMap = map[string]DeviceAction{
+	"coffeeAction":   coffeeAction,
+	"doorLockAction": doorLockAction,
+}
 
 func loadConf(filePath string) (confGeneral, map[string]confDevice, error) {
 	var config Config
