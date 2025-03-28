@@ -13,6 +13,8 @@ type confDevice struct {
 }
 type confGeneral struct {
 	INTERFACE string `toml:"interface"`
+	IPSTART string `toml:"ipStart"`
+	IPEND string `toml:"ipEnd"`
 }
 
 type Config struct {
