@@ -37,7 +37,7 @@ func createClient(id string, broker string) (mqtt.Client,error) {
 
 	opts.SetDialer(dialer)
 	newClient := mqtt.NewClient(opts)
-	return newClient,nil
+	return newClient, nil
 }
 
 func createDevice(id string, broker string, action DeviceAction) (Device,error) {
@@ -56,7 +56,7 @@ func createDevice(id string, broker string, action DeviceAction) (Device,error) 
 		cancel:  cancel,
 		context: ctx,
 	}
-	return newDevice,nil
+	return newDevice, nil
 }
 
 func deviceOn(d *Device) {
@@ -89,8 +89,6 @@ func connectDevice(d *Device) {
 		fmt.Printf("Device %s connected successfully.\n", clientID.ClientID())
 	}
 }
-
-
 
 func send(d *Device, message string) {
 	clientID := d.client.OptionsReader()

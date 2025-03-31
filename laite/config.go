@@ -22,8 +22,9 @@ type Config struct {
 }
 
 var actionMap = map[string]DeviceAction{
-	"coffeeAction":   coffeeAction,
-	"doorLockAction": doorLockAction,
+	"coffeeAction":          coffeeAction,
+	"doorLockAction":        doorLockAction,
+	"roomTemperatureAction": roomTemperatureAction,
 }
 
 func saveConf(filePath string, config Config) error {
