@@ -1,6 +1,5 @@
 const aedes = require('aedes')();
 const net = require('net');
-const { setTimeout } = require('timers');
 
 const PORT = 1883;
 const IP_ADDRESS = '0.0.0.0';
@@ -19,10 +18,15 @@ aedes.on('client', function (client) {
     sendToClient(client, topic, message);
 });
 
+aedes.on('unsubscribe', function (subscriptions, client) {
+    console.log(`TOPIC_UNSUBSCRIBED : MQTT Client ${(client ? client.id : client)} unsubscribed to topic: ${subscriptions.join(',')} from aedes broker ${aedes.id}`)
+})
+
 
 
 aedes.on('clientDisconnect', function (client) {
     console.log(`Client disconnected: ${client.id}`);
+    
 });
 
 

@@ -1,9 +1,7 @@
 [general]
 interface = "enp14s0" 
-#Subnet mask will be /24 
-#So by default there are 254 possible ip's under one subnet
 ipStart = "192.168.100.58" 
-ipEnd = "192.168.100.59"  
+ipEnd = "192.168.100.69"  
 
 
 [devices]

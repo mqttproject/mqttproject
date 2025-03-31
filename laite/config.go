@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/BurntSushi/toml"
 )
@@ -25,6 +26,14 @@ type Config struct {
 var actionMap = map[string]DeviceAction{
 	"coffeeAction":   coffeeAction,
 	"doorLockAction": doorLockAction,
+}
+
+func saveConf(filePath string, config Config) error {
+	data, err := toml.Marshal(config)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filePath, data, 0644)
 }
 
 func loadConf(filePath string) (confGeneral, map[string]confDevice, error) {

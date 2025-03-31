@@ -89,10 +89,12 @@ func connectDevice(d *Device) {
 	}
 }
 
+
+
 func send(d *Device, message string) {
 	clientID := d.client.OptionsReader()
 	topic := fmt.Sprintf("devices/%s/message", clientID.ClientID())
-	if token := d.client.Publish(topic, 0, false, message); token.Wait() && token.Error() != nil {
+	if token := d.client.Publish(topic, 0, true, message); token.Wait() && token.Error() != nil {
 		fmt.Printf("Error sending message to %s: %s\n", clientID.ClientID(), token.Error())
 	} else {
 		fmt.Printf("Message sent to %s successfully.\n", clientID.ClientID())
