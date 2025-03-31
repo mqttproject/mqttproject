@@ -19,12 +19,13 @@ type Device struct {
 	context context.Context
 }
 
-func createClient(id string, broker string, deviceInterface string,ipStart string , ipEnd string) (mqtt.Client,error) {
+func createClient(id string, broker string, deviceInterface string, ipStart string, ipEnd string) (mqtt.Client, error) {
 	opts := mqtt.NewClientOptions()
+	opts.SetKeepAlive(0)
 	opts.AddBroker(broker)
 	opts.SetClientID(id)
-	virtualIP := createVirtualIP(deviceInterface,ipStart,ipEnd)
-	if(virtualIP == ""){
+	virtualIP := createVirtualIP(deviceInterface, ipStart, ipEnd)
+	if virtualIP == "" {
 		return nil, fmt.Errorf("failed to create virtual IP for device %s", id)
 	}
 	localIP := net.ParseIP(virtualIP)
@@ -36,10 +37,10 @@ func createClient(id string, broker string, deviceInterface string,ipStart strin
 
 	opts.SetDialer(dialer)
 	newClient := mqtt.NewClient(opts)
-	return newClient,nil
+	return newClient, nil
 }
 
-func createDevice(id string, broker string, action DeviceAction, deviceInterface string,ipStart string , ipEnd string) (Device,error) {
+func createDevice(id string, broker string, action DeviceAction, deviceInterface string, ipStart string, ipEnd string) (Device, error) {
 	fmt.Println("Creating a device")
 
 	client, err := createClient(id, broker, deviceInterface, ipStart, ipEnd)
@@ -55,7 +56,7 @@ func createDevice(id string, broker string, action DeviceAction, deviceInterface
 		cancel:  cancel,
 		context: ctx,
 	}
-	return newDevice,nil
+	return newDevice, nil
 }
 
 func deviceOn(d *Device) {
@@ -88,8 +89,6 @@ func connectDevice(d *Device) {
 		fmt.Printf("Device %s connected successfully.\n", clientID.ClientID())
 	}
 }
-
-
 
 func send(d *Device, message string) {
 	clientID := d.client.OptionsReader()

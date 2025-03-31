@@ -55,3 +55,17 @@ func doorLockGenerateRFID() uint32 {
 
 	return rfid
 }
+
+func roomTemperatureAction(d *Device, ctx context.Context) {
+	go func() {
+		connectDevice(d)
+		msgChannel := make(chan string)
+		subscribeAndListen(d, msgChannel)
+		for {
+			<-time.After(5 * time.Second)
+			temperature := 20.0 + float64(time.Now().UnixNano()%100)/100.0
+			fmt.Println("Sending temperature:", temperature)
+			send(d, fmt.Sprintf("temperature: %f", temperature))
+		}
+	}()
+}

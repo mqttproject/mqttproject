@@ -14,8 +14,8 @@ type confDevice struct {
 }
 type confGeneral struct {
 	INTERFACE string `toml:"interface"`
-	IPSTART string `toml:"ipStart"`
-	IPEND string `toml:"ipEnd"`
+	IPSTART   string `toml:"ipStart"`
+	IPEND     string `toml:"ipEnd"`
 }
 
 type Config struct {
@@ -24,8 +24,9 @@ type Config struct {
 }
 
 var actionMap = map[string]DeviceAction{
-	"coffeeAction":   coffeeAction,
-	"doorLockAction": doorLockAction,
+	"coffeeAction":          coffeeAction,
+	"doorLockAction":        doorLockAction,
+	"roomTemperatureAction": roomTemperatureAction,
 }
 
 func saveConf(filePath string, config Config) error {
