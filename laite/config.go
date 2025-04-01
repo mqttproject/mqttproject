@@ -8,14 +8,12 @@ import (
 )
 
 type confDevice struct {
-	ID     string `toml:"id"`
+	Id     string `toml:"id"`
 	Action string `toml:"action"`
 	Broker string `toml:"broker"`
 }
 type confGeneral struct {
-	INTERFACE string `toml:"interface"`
-	IPSTART string `toml:"ipStart"`
-	IPEND string `toml:"ipEnd"`
+	Interface string `toml:"interface"`
 }
 
 type Config struct {
@@ -53,7 +51,7 @@ func loadConf(filePath string) (confGeneral, map[string]confDevice, error) {
 			continue
 		}
 		devicesConfig[id] = confDevice{
-			ID:     deviceConfig.ID,
+			Id:     deviceConfig.Id,
 			Action: deviceConfig.Action,
 			Broker: deviceConfig.Broker,
 		}
