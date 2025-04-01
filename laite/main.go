@@ -4,27 +4,33 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 );
 
 
 func main() {
+	if(runtime.GOOS!="linux"){
+		fmt.Println("Unsupported OS. This program makes use of the iproute2 utility.");
+		return;
+	}
 	generalConf,devicesConf , err := loadConf("devices.toml")
 	if err != nil{
 		fmt.Println("err in reading devices ",err);
+		return;
 	}
-	deviceInterface := generalConf.INTERFACE;
-	ipStart := generalConf.IPSTART;
-	ipEnd := generalConf.IPEND;
-
-	defer cleanNetworking(deviceInterface)
+	deviceInterface := generalConf.Interface;
+	if(!createInterface(deviceInterface)){
+	 	return;
+	 }
+	defer cleanNetworking()
 
 	for _, config := range devicesConf {
 		action, found := actionMap[config.Action]
 		if !found {
 			continue
 		}
-		device,err := createDevice(config.ID,config.Broker, action,deviceInterface,ipStart,ipEnd)
+		device,err := createDevice(config.Id,config.Broker, action)
 		if err != nil{
 			continue
 		}

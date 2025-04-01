@@ -11,12 +11,6 @@ The structure of the toml is expected to be the following.
 #Interface that you want to use for the creation of the network
 interface = ""  
 
-#IP marking the start of the range that can be used for the network
-ipStart = "" 
-
-#IP marking the end of the range that can be used for the network
-ipEnd = ""  
-
 #Header "devices" will hold all the devices 
 [devices]
 
@@ -33,16 +27,14 @@ action = ""
 broker = ""
 ```
 
-Subnet mask will be /24 
-So 254 possible ip's under one subnet is enforced.
+The program will try to create a virtual lan under the physical interface given through the interface configuration.
+
 
 ## Example configuration
 
 ```
 [general]
 interface = "enp14s0" 
-ipStart = "192.168.100.58" 
-ipEnd = "192.168.100.59"  
 
 [devices]
 [devices.coffee]
@@ -75,9 +67,7 @@ curl -X POST http://localhost:8080/configuration \
      -H "Content-Type: application/json" \
      -d '{
   "general": {
-    "interface": "wlan0",
-    "ipStart": "192.168.100.60",
-    "ipEnd": "192.168.100.70"
+     "interface": "wlan0"
   },
   "devices": {
     "coffee4": {
