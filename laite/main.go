@@ -6,8 +6,7 @@ import (
 	"os/signal"
 	"runtime"
 	"syscall"
-);
-
+)
 
 func main() {
 	if(runtime.GOOS!="linux"){
@@ -25,22 +24,30 @@ func main() {
 	 }
 	defer cleanNetworking()
 
+	var runningDevices []*Device
+
 	for _, config := range devicesConf {
 		action, found := actionMap[config.Action]
 		if !found {
 			continue
 		}
+
 		device,err := createDevice(config.Id,config.Broker, action)
 		if err != nil{
 			continue
 		}
 		deviceOn(&device)
+		runningDevices = append(runningDevices, &device)
 	}
 
 	go startAPI()
 
-
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-	<-sigChan  
+	<-sigChan
+
+	fmt.Println("Shutting down devices...")
+	for _, device := range runningDevices {
+		deviceOff(device)
+	}
 }

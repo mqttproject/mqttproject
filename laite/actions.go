@@ -3,14 +3,17 @@ package main
 import (
 	"context"
 	"fmt"
+	"math/rand/v2"
 	"time"
 )
 
 func coffeeAction(d *Device, ctx context.Context) {
 	fmt.Println("Running coffee machine...")
+
 	connectDevice(d)
 	msgChannel := make(chan string)
 	subscribeAndListen(d, msgChannel)
+
 	select {
 	case <-ctx.Done():
 		fmt.Println("Coffee machine action stopped by client.")
@@ -27,12 +30,14 @@ func coffeeAction(d *Device, ctx context.Context) {
 }
 
 func doorLockAction(d *Device, ctx context.Context) {
+	fmt.Println("Running door lock...")
 	connectDevice(d)
 	rfid := doorLockGenerateRFID()
 	send(d, fmt.Sprintf("RFID: %d", rfid))
 
 	msgChannel := make(chan string)
 	subscribeAndListen(d, msgChannel)
+
 	select {
 	case <-ctx.Done():
 		fmt.Println("door lock action stopped by client.")
@@ -57,15 +62,33 @@ func doorLockGenerateRFID() uint32 {
 }
 
 func roomTemperatureAction(d *Device, ctx context.Context) {
-	go func() {
-		connectDevice(d)
-		msgChannel := make(chan string)
-		subscribeAndListen(d, msgChannel)
-		for {
-			<-time.After(5 * time.Second)
-			temperature := 20.0 + float64(time.Now().UnixNano()%100)/100.0
-			fmt.Println("Sending temperature:", temperature)
-			send(d, fmt.Sprintf("temperature: %f", temperature))
+	fmt.Println("Running room temperature sensor...")
+	connectDevice(d)
+	msgChannel := make(chan string)
+	subscribeAndListen(d, msgChannel)
+
+	currentTemp := 20.0 + rand.Float64()*5.0
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			fmt.Println("Temperature sensor stopped.")
+			return
+		case msg := <-msgChannel:
+			fmt.Println("Handling received message:", msg)
+
+		case <-ticker.C:
+			change := (rand.Float64() - 0.5) * 0.5
+			currentTemp += change
+			if currentTemp < 15.0 {
+				currentTemp = 15.0
+			}
+			if currentTemp > 30.0 {
+				currentTemp = 30.0
+			}
+			send(d, fmt.Sprintf("%.1f", currentTemp))
 		}
-	}()
+	}
 }

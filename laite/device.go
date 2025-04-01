@@ -22,7 +22,6 @@ type Device struct {
 
 func createClient(id string, broker string) (mqtt.Client,error) {
 	opts := mqtt.NewClientOptions()
-	opts.SetKeepAlive(0);
 	opts.AddBroker(broker)
 	opts.SetClientID(id)
 	virtualIP := createVirtualIP()
@@ -104,10 +103,13 @@ func send(d *Device, message string) {
 }
 
 func subscribeAndListen(d *Device, msgChannel chan string) {
-	ClientID := d.client.OptionsReader()
-	topic := fmt.Sprintf("devices/%s/message", ClientID.ClientID())
-	d.client.Subscribe(topic, 0, func(client mqtt.Client, msg mqtt.Message) {
-		message := string(msg.Payload())
-		msgChannel <- message
-	})
+	clientID := d.client.OptionsReader()
+	topic := fmt.Sprintf("devices/%s/message", clientID.ClientID())
+	if token := d.client.Subscribe(topic, 0, func(client mqtt.Client, msg mqtt.Message) {
+		msgChannel <- string(msg.Payload())
+	}); token.Wait() && token.Error() != nil {
+		fmt.Printf("Error subscribing to %s: %s\n", topic, token.Error())
+	} else {
+		fmt.Printf("Subscribed to %s successfully.\n", topic)
+	}
 }
