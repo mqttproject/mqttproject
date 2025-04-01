@@ -31,7 +31,7 @@ func postConfiguration(c *gin.Context) {
 		General: generalConf,
 		Devices: devicesConf,
 	}
-	if newConfig.General.INTERFACE != "" {
+	if newConfig.General.Interface != "" {
 		existingConfig.General = newConfig.General
 	}
 	for key, device := range newConfig.Devices {
