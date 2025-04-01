@@ -19,6 +19,7 @@ type Device struct {
 	context context.Context
 }
 
+
 func createClient(id string, broker string) (mqtt.Client,error) {
 	opts := mqtt.NewClientOptions()
 	opts.SetKeepAlive(0);
@@ -40,7 +41,9 @@ func createClient(id string, broker string) (mqtt.Client,error) {
 	return newClient, nil
 }
 
+
 func createDevice(id string, broker string, action DeviceAction) (Device,error) {
+
 	fmt.Println("Creating a device")
 
 	client, err := createClient(id, broker)
