@@ -9,7 +9,6 @@ import (
 
 func coffeeAction(d *Device, ctx context.Context) {
 	fmt.Println("Running coffee machine...")
-
 	connectDevice(d)
 	msgChannel := make(chan string)
 	subscribeAndListen(d, msgChannel)

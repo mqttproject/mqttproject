@@ -4,10 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"sync"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
+
+var devices []*Device
+var devicesMutex sync.Mutex
 
 type DeviceAction func(*Device, context.Context)
 
@@ -41,13 +45,20 @@ func createClient(id string, broker string) (mqtt.Client,error) {
 }
 
 
-func createDevice(id string, broker string, action DeviceAction) (Device,error) {
-
+func createDevice(id string, broker string, action DeviceAction) (*Device,error) {
+    devicesMutex.Lock()
+	defer devicesMutex.Unlock()
 	fmt.Println("Creating a device")
-
+	for _, device := range devices {
+		clientID := device.client.OptionsReader()
+		if clientID.ClientID() == id {
+			fmt.Println("Device already exists:", id)
+			return &Device{}, fmt.Errorf("failed to create device: Device already exists");
+		}
+	}
 	client, err := createClient(id, broker)
 	if err != nil {
-		return Device{}, fmt.Errorf("failed to create device: %v", err)
+		return &Device{}, fmt.Errorf("failed to create device: %v", err)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -58,16 +69,22 @@ func createDevice(id string, broker string, action DeviceAction) (Device,error) 
 		cancel:  cancel,
 		context: ctx,
 	}
-	return newDevice, nil
+	devices = append(devices, &newDevice)
+	fmt.Println("Device created on createDevice");
+	return &newDevice, nil
 }
 
 func deviceOn(d *Device) {
+	devicesMutex.Lock()
+	defer devicesMutex.Unlock()
 	fmt.Println("Device on")
 	d.on = true
 	go d.action(d, d.context)
 }
 
 func deviceOff(d *Device) {
+	devicesMutex.Lock()
+	defer devicesMutex.Unlock()
 	fmt.Println("Device off")
 	d.on = false
 	d.cancel()

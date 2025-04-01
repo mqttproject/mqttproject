@@ -24,8 +24,6 @@ func main() {
 	 }
 	defer cleanNetworking()
 
-	var runningDevices []*Device
-
 	for _, config := range devicesConf {
 		action, found := actionMap[config.Action]
 		if !found {
@@ -36,18 +34,16 @@ func main() {
 		if err != nil{
 			continue
 		}
-		deviceOn(&device)
-		runningDevices = append(runningDevices, &device)
+		deviceOn(device)
 	}
 
 	go startAPI()
-
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	<-sigChan
 
 	fmt.Println("Shutting down devices...")
-	for _, device := range runningDevices {
+	for _, device := range devices {
 		deviceOff(device)
 	}
 }

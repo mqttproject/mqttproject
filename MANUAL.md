@@ -59,7 +59,7 @@ broker = "tcp://192.168.100.11:1883"
 ## /configuration
 
 Path /configuration can be used to modify the devices.toml configuration.
-Existing configuration can be fetched with GET-request while new configuration can be swapped with POST-request.
+Existing configuration can be fetched with GET-request while new configuration can be swapped with POST-request. The new configuration will not get evaluated in runtime.
 
 * POST (example curl)
 ```
@@ -87,13 +87,51 @@ curl -X POST http://localhost:8080/configuration \
     }
   }
 }'
-
-
-
 ```
 * GET (example curl)
 
 ``` 
 curl localhost:8080/configuration
 ```
+## /device/:id
+ 
+Path /device/:id takes a device id as a parameter. Existing device with matching id can be fetched through a GET-request while a new device with unique id can be created with POST-request. This route can be used to add new devices during runtime.
+
+* POST (Example curl)
+
+``` 
+curl -X POST http://localhost:8080/device/coffee2/off \
+ -H "Content-Type: application/json" \
+ -d '{
+  "action":"coffeeAction","broker":"tcp://0.0.0.0:1883"
+}'
+``` 
+Notice that new device id is not placed to the json body but to the path parameters.
+
+* GET (example curl)
+  
+```
+curl -X GET http://localhost:8080/device/coffee2
+```
+
+
+## /device/:id/on
+
+Path /device/:id/on takes a device id as a parameter. Existing device with a matching id can be turned on with a post request to this path. This route can be used to turn on devices during runtime.
+
+* POST (example curl)
+```
+curl -X POST http://localhost:8080/device/coffee2/on
+```
+
+## /device/:id/off
+
+Path /device/:id/off takes a device id as a parameter. Existing device with a matching id can be turned off with a post request to this path. This route can be used to turn off devices during runtime.
+
+* POST (example curl)
+```
+curl -X POST http://localhost:8080/device/coffee2/off
+```
+
+
 
