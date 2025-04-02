@@ -133,5 +133,13 @@ Path /device/:id/off takes a device id as a parameter. Existing device with a ma
 curl -X POST http://localhost:8080/device/coffee2/off
 ```
 
+## /reboot
 
+Path /reboot attempts to reboot the simulator.
+This will cause all the devices on that particular simulator to loose connection to the broker momentarily.
+
+* POST (example curl)
+```
+curl -X POST http://localhost:8080/reboot
+```
 

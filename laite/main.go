@@ -8,6 +8,7 @@ import (
 	"syscall"
 )
 
+
 func main() {
 	if(runtime.GOOS!="linux"){
 		fmt.Println("Unsupported OS. This program makes use of the iproute2 utility.");
@@ -19,24 +20,21 @@ func main() {
 		return;
 	}
 	deviceInterface := generalConf.Interface;
-	if(!createInterface(deviceInterface)){
-	 	return;
-	 }
+	if(createInterface(deviceInterface)){
 	defer cleanNetworking()
+		for _, config := range devicesConf {
+			action, found := actionMap[config.Action]
+			if !found {
+				continue
+			}
 
-	for _, config := range devicesConf {
-		action, found := actionMap[config.Action]
-		if !found {
-			continue
+			device,err := createDevice(config.Id,config.Broker, action)
+			if err != nil{
+				continue
+			}
+			deviceOn(device)
 		}
-
-		device,err := createDevice(config.Id,config.Broker, action)
-		if err != nil{
-			continue
-		}
-		deviceOn(device)
 	}
-
 	go startAPI()
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
@@ -46,4 +44,6 @@ func main() {
 	for _, device := range devices {
 		deviceOff(device)
 	}
+	
+	fmt.Println("Exiting program...") 
 }

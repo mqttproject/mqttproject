@@ -3,19 +3,71 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"os/exec"
+	"syscall"
 
 	"github.com/gin-gonic/gin"
 )
-func startAPI(){
+
+
+func startAPI() {
 	router := gin.New()
 	router.GET("/configuration", getConfiguration)
-	router.POST("/configuration",postConfiguration);
+	router.POST("/configuration", postConfiguration)
 	router.POST("/device/:id", postDevice)
 	router.GET("/device/:id", getDevice)
-	router.POST("/device/:id/on",signalDeviceOn)
-	router.POST("/device/:id/off",signalDeviceOff)
+	router.POST("/device/:id/on", signalDeviceOn)
+	router.POST("/device/:id/off", signalDeviceOff)
+	router.POST("/reboot", reboot)
 	router.Run("localhost:8080")
 }
+
+
+
+func reboot(c *gin.Context) {
+    cleanNetworking()
+    for _, device := range devices {
+        deviceOff(device)
+    }
+
+    fmt.Println("Rebooting system...")
+    execPath := "./laite"
+    if _, err := os.Stat(execPath); err == nil {
+        fmt.Println("Removing old executable...")
+        if err := os.Remove(execPath); err != nil {
+            fmt.Printf("Failed to remove old executable: %v\n", err)
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove old executable"})
+            return
+        }
+    }
+    fmt.Println("Building new executable...")
+    buildCmd := exec.Command("go", "build", "-o", execPath)
+    buildCmd.Stdout = os.Stdout
+    buildCmd.Stderr = os.Stderr
+
+    if err := buildCmd.Run(); err != nil {
+        fmt.Printf("Failed to build executable: %v\n", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to build executable"})
+        return
+    }
+
+    go func() {
+        cmd := exec.Command(execPath)
+        cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+        cmd.Stdout = os.Stdout
+        cmd.Stderr = os.Stderr
+
+        if err := cmd.Start(); err != nil {
+            fmt.Printf("Failed to start the new process: %v\n", err)
+        }
+      	cmd.Wait(); 
+        os.Exit(0)
+    }()
+}
+
+
+
 
 func getDevice(c *gin.Context) {
 	deviceID := c.Param("id")
