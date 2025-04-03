@@ -136,7 +136,7 @@ curl -X POST http://localhost:8080/device/coffee2/off
 ## /reboot
 
 Path /reboot attempts to reboot the simulator.
-This will cause all the devices on that particular simulator to loose connection to the broker momentarily.
+This will cause all the devices on that particular simulator to lose connection to the broker momentarily.
 
 * POST (example curl)
 ```
