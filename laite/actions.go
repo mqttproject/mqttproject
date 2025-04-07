@@ -31,6 +31,15 @@ func coffeeAction(d *Device, ctx context.Context) {
 func doorLockAction(d *Device, ctx context.Context) {
 	fmt.Println("Running door lock...")
 	connectDevice(d)
+
+	clientID := d.client.OptionsReader()
+	deviceId := clientID.ClientID()
+	err := rfidStorage.createDeviceTable(deviceId)
+	if err != nil {
+		fmt.Printf("Error creating RFID table for device %s: %v\n", deviceId, err)
+		return
+	}
+
 	rfid := doorLockGenerateRFID()
 	send(d, fmt.Sprintf("RFID: %d", rfid))
 
