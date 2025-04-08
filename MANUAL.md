@@ -7,8 +7,9 @@ The structure of the toml is expected to be the following.
 ```
 #Header "general" will hold the general configuration
 [general]
-#This will be generated during runtime. Dont touch it.
-id = "" 
+#id will be generated during runtime. Dont touch it.
+id = "a7474cba-4403-4c97-8ba7-d561c9c0f983" 
+
 #Interface that you want to use for the creation of the network
 interface = ""  
 
@@ -35,7 +36,7 @@ The program will try to create a virtual lan under the physical interface given 
 
 ```
 [general]
-id = "XD"
+id = "a7474cba-4403-4c97-8ba7-d561c9c0f983"
 interface = "enp14s0" 
 
 [devices]
@@ -69,7 +70,7 @@ curl -X POST http://localhost:8080/configuration \
      -H "Content-Type: application/json" \
      -d '{
   "general": {
-     "id":"XD"
+      "id":"a7474cba-4403-4c97-8ba7-d561c9c0f983",
      "interface": "wlan0"
   },
   "devices": {
@@ -144,5 +145,45 @@ This will cause all the devices on that particular simulator to lose connection 
 * POST (example curl)
 ```
 curl -X POST http://localhost:8080/reboot
+```
+
+## /devices 
+
+This path accepts a json of multiple devices. It will add every device on the received json to the devices list during runtime.
+
+* POST (example curl)
+
+``` 
+curl -X POST http://localhost:8080/devices \
+  -H "Content-Type: application/json" \
+  -d '{
+    "devices": {
+      "coffee4": {
+        "id": "coffee4",
+        "action": "coffeeAction",
+        "broker": "tcp://192.168.100.12:1883"
+      },
+      "coffee5": {
+        "id": "coffee5",
+        "action": "coffeeAction",
+        "broker": "tcp://192.168.100.12:1883"
+      },
+      "coffee6": {
+        "id": "coffee6",
+        "action": "coffeeAction",
+        "broker": "tcp://192.168.100.14:1883"
+      }
+    }
+  }'
+
+  ```
+## /device/:id/delete 
+
+This path can be used to delete a device from the runtime list of devices. The deleted device will disconnect from broker if its connected.
+
+* POST (example curl)
+
+```
+curl -X POST http://localhost:8080/device/coffee2/delete
 ```
 
