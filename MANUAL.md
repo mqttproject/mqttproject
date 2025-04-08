@@ -7,7 +7,8 @@ The structure of the toml is expected to be the following.
 ```
 #Header "general" will hold the general configuration
 [general]
-
+#This will be generated during runtime. Dont touch it.
+id = "" 
 #Interface that you want to use for the creation of the network
 interface = ""  
 
@@ -34,6 +35,7 @@ The program will try to create a virtual lan under the physical interface given 
 
 ```
 [general]
+id = "XD"
 interface = "enp14s0" 
 
 [devices]
@@ -67,6 +69,7 @@ curl -X POST http://localhost:8080/configuration \
      -H "Content-Type: application/json" \
      -d '{
   "general": {
+     "id":"XD"
      "interface": "wlan0"
   },
   "devices": {
