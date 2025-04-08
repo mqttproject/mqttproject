@@ -36,7 +36,7 @@ func createClient(id string, broker string) (mqtt.Client, error) {
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(broker)
 	opts.SetClientID(id)
-	virtualIP := createVirtualIP()
+	virtualIP := createVirtualDevice()
 	if virtualIP == "" {
 		return nil, fmt.Errorf("failed to create virtual IP for device %s", id)
 	}
@@ -55,7 +55,6 @@ func createClient(id string, broker string) (mqtt.Client, error) {
 func createDevice(id string, broker string, action DeviceAction) (*Device, error) {
 	devicesMutex.Lock()
 	defer devicesMutex.Unlock()
-	fmt.Println("Creating a device")
 	for _, device := range devices {
 		clientID := device.client.OptionsReader()
 		if clientID.ClientID() == id {
@@ -77,7 +76,6 @@ func createDevice(id string, broker string, action DeviceAction) (*Device, error
 		context: ctx,
 	}
 	devices = append(devices, &newDevice)
-	fmt.Println("Device created on createDevice")
 	return &newDevice, nil
 }
 
@@ -96,6 +94,10 @@ func deviceOff(d *Device) {
 	d.on = false
 	d.cancel()
 	disconnectDevice(d)
+}
+
+func cleanDevices(){
+	devices = []*Device{}
 }
 
 func disconnectDevice(d *Device) {

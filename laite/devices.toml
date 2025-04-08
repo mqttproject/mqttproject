@@ -1,2 +1,17 @@
 [general]
-interface = "enp14s0" 
+  id = "67d81e87-2f07-4a90-a18a-da78b22d03dd"
+  interface = "enp14s0"
+
+[devices]
+  [devices.coffee]
+    id = "coffee"
+    action = "coffeeAction"
+    broker = "tcp://0.0.0.0:1883"
+  [devices.coffee2]
+    id = "coffee2"
+    action = "coffeeAction"
+    broker = "tcp://0.0.0.0:1883"
+  [devices.coffee3]
+    id = "coffee3"
+    action = "coffeeAction"
+    broker = "tcp://0.0.0.0:1883"

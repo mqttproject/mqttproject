@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
+	uuid "github.com/satori/go.uuid"
 )
 
 type confDevice struct {
@@ -13,6 +14,7 @@ type confDevice struct {
 	Broker string `toml:"broker"`
 }
 type confGeneral struct {
+	Id string `toml:"id"`
 	Interface string `toml:"interface"`
 }
 
@@ -26,6 +28,17 @@ var actionMap = map[string]DeviceAction{
 	"doorLockAction":        doorLockAction,
 	"roomTemperatureAction": roomTemperatureAction,
 }
+
+func generateIdentity(config *Config) {
+	if config.General.Id == "" {
+		myuuid := uuid.NewV4()
+		config.General.Id = myuuid.String() 
+		fmt.Printf("Generated new UUID: %s\n", config.General.Id)
+	} else {
+		fmt.Printf("Existing UUID: %s\n", config.General.Id)
+	}
+}
+
 
 func saveConf(filePath string, config Config) error {
 	data, err := toml.Marshal(config)

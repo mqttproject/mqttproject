@@ -6,11 +6,15 @@ import (
 	"strconv"
 	"strings"
 )
-
-var assignedIPs = make(map[string]bool)
+type VirtualDevice struct {
+    InterfaceName string
+    IPAddress     string
+	Used          bool
+}
+var physicalInterface string;
+var virtualDevices = make(map[string]VirtualDevice)
 var currentIP uint32 = ipToInt("10.0.0.1")
-var vlanInterface = "vlan0"
-var vlanID = "10"
+var deviceCount int = 0
 
 func ipToInt(ip string) uint32 {
 	parts := strings.Split(ip, ".") 
@@ -32,69 +36,70 @@ func intToIP(ipInt uint32) string {
 		ipInt&255)
 }
 func getNextAvailableIP() (string, bool) {
-	for {
+	for attempts := 0; attempts < 16777214; attempts++ {
 		ipStr := intToIP(currentIP)
-		if !assignedIPs[ipStr] {
-			assignedIPs[ipStr] = true
+		device, exists := virtualDevices[ipStr]
+		if !exists || !device.Used {
 			currentIP++
 			return ipStr, true
 		}
+
 		currentIP++
 	}
-}
-
-func cleanVirtualIP(ip string) {
-	cmd := exec.Command("sudo", "ip", "addr", "del", ip+"/24", "dev", vlanInterface)
-	err := cmd.Run()
-	if err != nil {
-		fmt.Printf("Failed to remove virtual IP %s: %v\n", ip, err)
-	} else {
-		fmt.Printf("Successfully removed virtual IP %s\n", ip)
-	}
+	return "", false
 }
 
 
-func createVirtualIP() string {
-	ipStr, found := getNextAvailableIP()
-	if !found {
-		fmt.Println("Failed to assign a virtual IP: No available IPs.")
+func createVirtualDevice() string {
+	ip, ok := getNextAvailableIP()
+	if !ok {
+		fmt.Println("No available IPs.")
 		return ""
 	}
 
-	cmd := exec.Command("sudo", "ip", "addr", "add", ipStr+"/24", "dev",vlanInterface)
-	err := cmd.Run()
+	ifaceName := fmt.Sprintf("vdev%d", deviceCount)
+	deviceCount++
+
+	addCmd := exec.Command("sudo", "ip", "link", "add", ifaceName, "link", physicalInterface, "type", "macvlan", "mode", "bridge")
+	addOutput, err := addCmd.CombinedOutput()
 	if err != nil {
-		fmt.Println("Failed to assign virtual IP:"+ ipStr , err)
+		fmt.Printf("Failed to create macvlan interface %s: %v\nCommand output: %s\n", ifaceName, err, string(addOutput))
 		return ""
 	}
-	return ipStr
-}
 
-func createInterface(physicalInterface string ) bool {
-	addIface := exec.Command("sudo", "ip", "link", "add", vlanInterface, "link", physicalInterface, "type", "vlan", "id", vlanID)
-	err := addIface.Run()
-	if err != nil {
-		fmt.Println("Failed to create VLAN interface:", err)
-		return false
-	}
-	upIface := exec.Command("sudo", "ip", "link", "set", vlanInterface, "up")
-	err = upIface.Run()
-	if err != nil {
-		fmt.Println("Failed to bring up VLAN interface:", err)
-		return false
+	upCmd := exec.Command("sudo", "ip", "link", "set", ifaceName, "up")
+	if err := upCmd.Run(); err != nil {
+		fmt.Println("Failed to bring interface up:", err)
+		return ""
 	}
 
-	fmt.Println("VLAN interface", vlanInterface, "created successfully on", physicalInterface)
-	return true
+	assignCmd := exec.Command("sudo", "ip", "addr", "add", ip+"/8", "dev", ifaceName)
+	if err := assignCmd.Run(); err != nil {
+		fmt.Println("Failed to assign IP:", err)
+		return ""
+	}
+
+	virtualDevices[ip] = VirtualDevice{
+		InterfaceName: ifaceName,
+		IPAddress:     ip,
+		Used:          true,
+	}
+
+	fmt.Println("Created virtual device", ifaceName, "with IP", ip)
+	return ip
 }
+
 
 func cleanNetworking() {
-	delIface := exec.Command("sudo", "ip", "link", "delete", vlanInterface)
-	err := delIface.Run()
-	if err != nil {
-		fmt.Println("Failed to delete VLAN interface:", err)
-	} else {
-		fmt.Println("Successfully deleted VLAN interface", vlanInterface)
+	for _, device := range virtualDevices {
+		deleteCmd := exec.Command("sudo", "ip", "link", "delete", device.InterfaceName)
+		if err := deleteCmd.Run(); err != nil {
+			fmt.Printf("Failed to delete macvlan interface %s: %v\n", device.InterfaceName, err)
+		} else {
+			fmt.Printf("Deleted macvlan interface %s\n", device.InterfaceName)
+		}
 	}
+	virtualDevices = make(map[string]VirtualDevice)
+	currentIP = ipToInt("10.0.0.1")
+	deviceCount = 0
 }
-

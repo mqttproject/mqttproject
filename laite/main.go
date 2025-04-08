@@ -8,6 +8,9 @@ import (
 	"syscall"
 )
 
+
+
+
 func main() {
 	if runtime.GOOS != "linux" {
 		fmt.Println("Unsupported OS. This program makes use of the iproute2 utility.")
@@ -24,9 +27,18 @@ func main() {
 		fmt.Println("err in reading devices ", err)
 		return
 	}
+	config := Config{
+		General: generalConf,
+		Devices: devicesConf,
+	}
+	generateIdentity(&config)
+	if err := saveConf("devices.toml", config); err != nil {
+		fmt.Printf("Error saving configuration: %v\n", err)
+	}
+
 	deviceInterface := generalConf.Interface
-	if createInterface(deviceInterface) {
-		defer cleanNetworking()
+	if (deviceInterface!="") {
+		physicalInterface = deviceInterface;
 		for _, config := range devicesConf {
 			action, found := actionMap[config.Action]
 			if !found {
@@ -40,6 +52,7 @@ func main() {
 			deviceOn(device)
 		}
 	}
+
 	go startAPI()
 
 	sigChan := make(chan os.Signal, 1)
@@ -57,6 +70,6 @@ func main() {
 	for _, device := range devices {
 		deviceOff(device)
 	}
-
+	cleanNetworking()
 	fmt.Println("Exiting program...")
 }

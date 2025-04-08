@@ -3,9 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"os"
-	"os/exec"
-	"syscall"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,57 +13,95 @@ func startAPI() {
 	router.GET("/configuration", getConfiguration)
 	router.POST("/configuration", postConfiguration)
 	router.POST("/device/:id", postDevice)
+	router.POST("/devices",postDevices);
 	router.GET("/device/:id", getDevice)
 	router.POST("/device/:id/on", signalDeviceOn)
 	router.POST("/device/:id/off", signalDeviceOff)
+	router.POST("/device/:id/delete",deleteDevice)
 	router.POST("/reboot", reboot)
 	router.Run("localhost:8080")
 }
 
-
-
 func reboot(c *gin.Context) {
-    cleanNetworking()
-    for _, device := range devices {
-        deviceOff(device)
-    }
+	for _, device := range devices {
+		deviceOff(device)
+	}
 
-    fmt.Println("Rebooting system...")
-    execPath := "./laite"
-    if _, err := os.Stat(execPath); err == nil {
-        fmt.Println("Removing old executable...")
-        if err := os.Remove(execPath); err != nil {
-            fmt.Printf("Failed to remove old executable: %v\n", err)
-            c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove old executable"})
-            return
-        }
-    }
-    fmt.Println("Building new executable...")
-    buildCmd := exec.Command("go", "build", "-o", execPath)
-    buildCmd.Stdout = os.Stdout
-    buildCmd.Stderr = os.Stderr
+	cleanNetworking() 
+	cleanDevices()
 
-    if err := buildCmd.Run(); err != nil {
-        fmt.Printf("Failed to build executable: %v\n", err)
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to build executable"})
-        return
-    }
+	generalConf, devicesConf, err := loadConf("devices.toml")
+	if err != nil {
+		fmt.Println("err in reading devices ", err)
+		return
+	}
+	deviceInterface := generalConf.Interface
+	if (deviceInterface!="") {
+		physicalInterface = deviceInterface;
+		for _, config := range devicesConf {
+			action, found := actionMap[config.Action]
+			if !found {
+				continue
+			}
 
-    go func() {
-        cmd := exec.Command(execPath)
-        cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-        cmd.Stdout = os.Stdout
-        cmd.Stderr = os.Stderr
+			device, err := createDevice(config.Id, config.Broker, action)
+			if err != nil {
+				continue
+			}
+			deviceOn(device)
+		}
+	}
 
-        if err := cmd.Start(); err != nil {
-            fmt.Printf("Failed to start the new process: %v\n", err)
-        }
-      	cmd.Wait(); 
-        os.Exit(0)
-    }()
 }
 
 
+
+func postDevices(c *gin.Context){
+	type DevicesPayload struct {
+		Devices map[string]confDevice `json:"devices"`
+	}
+	var payload DevicesPayload
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid JSON format", "details": err.Error()})
+		return
+	}
+
+	for _,d := range payload.Devices {
+		Action := actionMap[d.Action];
+		if Action == nil{
+			c.JSON(400, gin.H{"error": fmt.Sprintf("Unknown action for device '%s': %s", d.Id, d.Action)})		
+		}
+		createDevice(d.Id, d.Broker,Action);
+	}
+	c.JSON(http.StatusOK, "It Probably worked");
+}
+
+func deleteDevice(c *gin.Context) {
+	devicesMutex.Lock()
+	defer devicesMutex.Unlock()
+	deviceID := c.Param("id")
+	found := false
+	filtered := make([]*Device, 0, len(devices))
+	for _, device := range devices {
+		clientID := device.client.OptionsReader()
+		if clientID.ClientID() == deviceID {
+			found = true
+			devicesMutex.Unlock()
+			deviceOff(device)
+			devicesMutex.Lock()
+			continue 
+		}
+		filtered = append(filtered, device)
+	}
+
+	if !found {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Device not found"})
+		return
+	}
+
+	devices = filtered 
+	c.JSON(http.StatusOK, gin.H{"message": "Device deleted"})
+}
 
 
 func getDevice(c *gin.Context) {
@@ -92,6 +127,7 @@ func getDevice(c *gin.Context) {
 	}
 	c.JSON(http.StatusNotFound, gin.H{"error": "Device not found"})
 }
+
 func signalDeviceOn(c *gin.Context){
 	deviceID := c.Param("id");
 
@@ -109,6 +145,7 @@ func signalDeviceOn(c *gin.Context){
 		}
 	}
 }
+
 func signalDeviceOff(c *gin.Context){
 	deviceID := c.Param("id");
 
@@ -126,6 +163,7 @@ func signalDeviceOff(c *gin.Context){
 		}
 	}
 }
+
 func postDevice(c *gin.Context) {
 	deviceID := c.Param("id") 
 
@@ -160,8 +198,6 @@ func postDevice(c *gin.Context) {
 		})
 	}
 }
-
-
 
 func postConfiguration(c *gin.Context) {
 	var newConfig Config
