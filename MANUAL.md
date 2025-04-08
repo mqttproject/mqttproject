@@ -29,7 +29,7 @@ action = ""
 broker = ""
 ```
 
-The program will try to create a virtual lan under the physical interface given through the interface configuration.
+The program will try to create multiple macvlan interfaces under the physical interface given through the interface configuration.
 
 
 ## Example configuration
