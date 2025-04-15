@@ -2,7 +2,11 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"os"
+	"os/exec"
+	"syscall"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,7 +23,29 @@ func startAPI() {
 	router.POST("/device/:id/off", signalDeviceOff)
 	router.POST("/device/:id/delete",deleteDevice)
 	router.POST("/reboot", reboot)
+	router.POST("/update", updateApp)
 	router.Run("localhost:8080")
+}
+
+func updateApp(c *gin.Context) {
+	file, err := c.FormFile("file")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	dst := fmt.Sprintf("./%s", file.Filename)
+	err = c.SaveUploadedFile(file, dst)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})
+		return
+	}
+	err = exec.Command("bash", "./compile.sh").Start()
+	if err != nil {
+		log.Println("Error executing compile.sh:", err)
+		return
+	}
+	process, _ := os.FindProcess(os.Getpid())
+	process.Signal(syscall.SIGTERM)
 }
 
 func reboot(c *gin.Context) {
