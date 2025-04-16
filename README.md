@@ -5,5 +5,5 @@ This project is a platform for testing networks using simulated IOT-devices. Dev
 
 # Deploying the project
 
-*1 ```cd laite```
-*2 ```go run .``` 
+* 1 ```cd laite```
+* 2 ```go run .``` 
