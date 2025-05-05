@@ -5,10 +5,10 @@ mqttproject is a testing platform for networks using simulated IoT devices. Thes
 ## Project Structure
 ```
 mqttproject/
-├── laite/              # IoT device simulator written in Go
+├── simulator/              # IoT device simulator written in Go
 │   ├── main.go
 │   └── ...             
-├── palvelin/           # MQTT broker built with Node.js
+├── server/           # MQTT broker built with Node.js
 │   ├── main.js
 │   ├── package.json
 │   └── ...             
@@ -23,15 +23,15 @@ mqttproject/
 ### Running the IoT Device Simulator
 First, compile and run the simulator:
 ```bash
-cd laite 
+cd simulator 
 go build
-./laite
+./simulator
 ```
 
 ### Starting the MQTT Broker
 Next, set up and start the Node.js MQTT broker:
 ```bash
-cd palvelin
+cd server
 npm ci
 npm start
 ```
