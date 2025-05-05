@@ -9,8 +9,6 @@ import (
 )
 
 
-
-
 func main() {
 	if runtime.GOOS != "linux" {
 		fmt.Println("Unsupported OS. This program makes use of the iproute2 utility.")
