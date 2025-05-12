@@ -149,7 +149,9 @@ curl -X POST http://localhost:8080/reboot
 
 ## /devices 
 
-This path accepts a json of multiple devices. It will add every device on the received json to the devices list during runtime.
+POST-request to this path accepts a json of multiple devices. It will add every device on the received json to the devices list during runtime.
+
+GET-request to this path will return a list of all the devices currently on the devices list. 
 
 * POST (example curl)
 
@@ -177,6 +179,15 @@ curl -X POST http://localhost:8080/devices \
   }'
 
   ```
+
+* GET (example curl)
+
+``` 
+curl localhost:8080/devices
+```
+
+
+
 ## /device/:id/delete 
 
 This path can be used to delete a device from the runtime list of devices. The deleted device will disconnect from broker if its connected.

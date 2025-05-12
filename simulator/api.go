@@ -18,6 +18,7 @@ func startAPI() {
 	router.POST("/configuration", postConfiguration)
 	router.POST("/device/:id", postDevice)
 	router.POST("/devices",postDevices);
+	router.GET("/devices",getDevices);
 	router.GET("/device/:id", getDevice)
 	router.POST("/device/:id/on", signalDeviceOn)
 	router.POST("/device/:id/off", signalDeviceOff)
@@ -25,6 +26,28 @@ func startAPI() {
 	router.POST("/reboot", reboot)
 	router.POST("/update", updateActions)
 	router.Run("localhost:8080")
+}
+
+
+func getDevices(c *gin.Context) {
+	result := make(map[string]interface{})
+
+	for _, device := range devices {
+		clientID := device.client.OptionsReader();
+		newDevice := struct {
+			ID     string `json:"id"`
+			On     bool   `json:"on"`
+			Action string `json:"action"`
+		}{
+			ID:     clientID.ClientID(),
+			On:     device.on,
+			Action: fmt.Sprintf("%T", device.action),
+		}
+		result[clientID.ClientID()] = newDevice
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"devices": result,
+	})
 }
 
 // WARNING: This function is EXTREMELY INSECURE and should NOT be used in production.
