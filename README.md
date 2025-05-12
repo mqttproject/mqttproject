@@ -51,6 +51,11 @@ This API allows external tools to:
 - Restart the simulator.
 - Update the actions performed by devices.
 
+### Stress testing
+The project can be used to stress devices in between the simulator and the broker with simulated network traffic.
+![image](https://github.com/user-attachments/assets/9500a1d5-578f-4fe4-a90d-2dde8eb284dc)
+
+
 ## API Documentation
 The simulator includes an HTTP REST API that allows control via a separate web interface. For full details on the available endpoints and usage, please refer to the [manual](MANUAL.md).
 
