@@ -24,9 +24,10 @@ func startAPI() {
 	router.POST("/device/:id/off", signalDeviceOff)
 	router.POST("/device/:id/delete",deleteDevice)
 	router.POST("/reboot", reboot)
-	router.POST("/update", updateApp)
+	router.POST("/update", updateActions)
 	router.Run("localhost:8080")
 }
+
 
 func getDevices(c *gin.Context) {
 	result := make(map[string]interface{})
@@ -49,14 +50,20 @@ func getDevices(c *gin.Context) {
 	})
 }
 
-
-func updateApp(c *gin.Context) {
+// WARNING: This function is EXTREMELY INSECURE and should NOT be used in production.
+// It allows arbitrary file uploads and execution of a shell script without validation or authentication,
+// which opens the application to severe vulnerabilities including remote code execution (RCE)
+func updateActions(c *gin.Context) {
 	file, err := c.FormFile("file")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	dst := fmt.Sprintf("./%s", file.Filename)
+	if file.Filename != "actions.go" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Only actions.go can be updated"})
+		return
+	}
+	dst := "./actions.go"
 	err = c.SaveUploadedFile(file, dst)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file"})

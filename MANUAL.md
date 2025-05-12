@@ -1,6 +1,6 @@
 # CONFIGURATION
 
-Configuration is done through laite/devices.toml.
+Configuration is done through simulator/devices.toml.
 
 The structure of the toml is expected to be the following.
 
@@ -198,3 +198,13 @@ This path can be used to delete a device from the runtime list of devices. The d
 curl -X POST http://localhost:8080/device/coffee2/delete
 ```
 
+## /update
+
+This path allows uploading and replacing the actions.go file. This route accepts a POST request with a file in multipart form data. Only a file named exactly actions.go will be accepted. After a successful upload, a shell script compile.sh is executed, and the application is terminated with a SIGTERM signal to allow a restart with the updated code.
+
+> [!WARNING]
+> This endpoint must be protected and is intended for controlled environments only. It performs critical operations like file replacement, compilation, and process termination.
+
+```
+curl -X POST -F "file=@actions.go" http://localhost:8080/update
+```

@@ -13,4 +13,4 @@ fi
 echo "Compilation successful."
 
 echo "Running the application..."
-./laite
+./simulator
