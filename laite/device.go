@@ -24,6 +24,7 @@ type Device struct {
 	action  DeviceAction
 	cancel  context.CancelFunc
 	context context.Context
+	broker string
 }
 type RFIDStorage struct {
 	db    *sql.DB
@@ -74,6 +75,7 @@ func createDevice(id string, broker string, action DeviceAction) (*Device, error
 		action:  action,
 		cancel:  cancel,
 		context: ctx,
+		broker: broker,
 	}
 	devices = append(devices, &newDevice)
 	return &newDevice, nil

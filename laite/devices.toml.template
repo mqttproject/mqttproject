@@ -1,23 +1,32 @@
+# Template configuration file for simulator
+# Copy this file to devices.toml and configure for your environment
+
 [general]
-  id = "test-simulator"
+  # UUID - Leave empty to auto-generate on first run
+  id = ""
+  
+  # Network interface used for creating virtual devices
   interface = "ens33"
+  
+  # Server URL - Set to your server's URL
   server_url = "http://192.168.1.116:3000"
+  
+  # Token - Obtain this from the dashboard and paste here
   token = ""
 
 [devices]
+  # Example device configurations
   [devices.coffee]
     id = "coffee"
     action = "coffeeAction"
     broker = "tcp://0.0.0.0:1883"
+    
   [devices.coffee2]
     id = "coffee2"
     action = "coffeeAction"
     broker = "tcp://0.0.0.0:1883"
+    
   [devices.coffee3]
     id = "coffee3"
-    action = "coffeeAction"
-    broker = "tcp://0.0.0.0:1883"
-  [devices.test-coffee]
-    id = "test-coffee"
     action = "coffeeAction"
     broker = "tcp://0.0.0.0:1883"

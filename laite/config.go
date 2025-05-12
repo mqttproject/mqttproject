@@ -1,3 +1,4 @@
+
 package main
 
 import (
@@ -13,15 +14,19 @@ type confDevice struct {
 	Action string `toml:"action"`
 	Broker string `toml:"broker"`
 }
+
 type confGeneral struct {
-	Id string `toml:"id"`
+	Id        string `toml:"id"`
 	Interface string `toml:"interface"`
+	ServerUrl string `toml:"server_url"` 
+	Token    string `toml:"token"` //Enter registration token into this field     
 }
 
 type Config struct {
 	General confGeneral           `toml:"general"`
 	Devices map[string]confDevice `toml:"devices"`
 }
+
 
 var actionMap = map[string]DeviceAction{
 	"coffeeAction":          coffeeAction,
@@ -38,7 +43,6 @@ func generateIdentity(config *Config) {
 		fmt.Printf("Existing UUID: %s\n", config.General.Id)
 	}
 }
-
 
 func saveConf(filePath string, config Config) error {
 	data, err := toml.Marshal(config)

@@ -1,38 +1,52 @@
+
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"syscall"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
-
 
 func startAPI() {
 	router := gin.New()
 	router.GET("/configuration", getConfiguration)
 	router.POST("/configuration", postConfiguration)
 	router.POST("/device/:id", postDevice)
-	router.POST("/devices",postDevices);
-	router.GET("/devices",getDevices);
+	router.POST("/devices", postDevices)
+	router.GET("/devices", getDevices)
 	router.GET("/device/:id", getDevice)
 	router.POST("/device/:id/on", signalDeviceOn)
 	router.POST("/device/:id/off", signalDeviceOff)
-	router.POST("/device/:id/delete",deleteDevice)
+	router.POST("/device/:id/delete", deleteDevice)
 	router.POST("/reboot", reboot)
 	router.POST("/update", updateApp)
-	router.Run("localhost:8080")
+	
+	// Add heartbeat endpoint for the server to check
+	router.GET("/heartbeat", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "ok"})
+	})
+	
+	router.Run("0.0.0.0:8080")
 }
+
 
 func getDevices(c *gin.Context) {
 	result := make(map[string]interface{})
 
+	devicesMutex.Lock()
+	defer devicesMutex.Unlock()
+	
 	for _, device := range devices {
-		clientID := device.client.OptionsReader();
+		clientID := device.client.OptionsReader()
 		newDevice := struct {
 			ID     string `json:"id"`
 			On     bool   `json:"on"`
@@ -44,11 +58,11 @@ func getDevices(c *gin.Context) {
 		}
 		result[clientID.ClientID()] = newDevice
 	}
+	
 	c.JSON(http.StatusOK, gin.H{
 		"devices": result,
 	})
 }
-
 
 func updateApp(c *gin.Context) {
 	file, err := c.FormFile("file")
@@ -100,10 +114,7 @@ func reboot(c *gin.Context) {
 			deviceOn(device)
 		}
 	}
-
 }
-
-
 
 func postDevices(c *gin.Context){
 	type DevicesPayload struct {
@@ -118,7 +129,8 @@ func postDevices(c *gin.Context){
 	for _,d := range payload.Devices {
 		Action := actionMap[d.Action];
 		if Action == nil{
-			c.JSON(400, gin.H{"error": fmt.Sprintf("Unknown action for device '%s': %s", d.Id, d.Action)})		
+			c.JSON(400, gin.H{"error": fmt.Sprintf("Unknown action for device '%s': %s", d.Id, d.Action)})
+			return
 		}
 		createDevice(d.Id, d.Broker,Action);
 	}
@@ -152,7 +164,6 @@ func deleteDevice(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Device deleted"})
 }
 
-
 func getDevice(c *gin.Context) {
 	deviceID := c.Param("id")
 
@@ -160,7 +171,6 @@ func getDevice(c *gin.Context) {
 		clientID := device.client.OptionsReader()
 
 		if clientID.ClientID() == deviceID {
-
 			deviceInfo := struct {
 				ID     string `json:"id"`
 				On     bool   `json:"on"`
@@ -213,8 +223,9 @@ func signalDeviceOff(c *gin.Context){
 	}
 }
 
+// postDevice with server notification
 func postDevice(c *gin.Context) {
-	deviceID := c.Param("id") 
+	deviceID := c.Param("id")
 
 	var requestData struct {
 		Action string `json:"action"`
@@ -231,7 +242,6 @@ func postDevice(c *gin.Context) {
 	fmt.Println("Action:", requestData.Action)
 	fmt.Println("Broker:", requestData.Broker)
 
-
 	actionFunc, exists := actionMap[requestData.Action]
 	if !exists {
 		fmt.Println("Unknown action:", requestData.Action)
@@ -239,13 +249,49 @@ func postDevice(c *gin.Context) {
 		return
 	}
 
-
-	_,err := createDevice(deviceID,requestData.Broker,actionFunc)
-	if err != nil{
+	_, err := createDevice(deviceID, requestData.Broker, actionFunc)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
 		})
+		return
 	}
+
+	// Notify the server about this new device if configured and authenticated
+	generalConf, _, _ := loadConf("devices.toml")
+	if generalConf.ServerUrl != ""{
+		go func() {
+			serverPayload := map[string]interface{}{
+				"action":       requestData.Action,
+				"broker":       requestData.Broker,
+				"simulatorUrl": fmt.Sprintf("http://%s:8080", getOutboundIP()),
+				"simulatorId":  generalConf.Id,
+			}
+			
+			jsonData, _ := json.Marshal(serverPayload)
+			req, err := http.NewRequest("POST", generalConf.ServerUrl+"/api/device/"+deviceID, bytes.NewBuffer(jsonData))
+			if err == nil {
+				req.Header.Set("Content-Type", "application/json")
+				
+				client := &http.Client{Timeout: 5 * time.Second}
+				resp, err := client.Do(req)
+				if err == nil {
+					defer resp.Body.Close()
+					if resp.StatusCode != http.StatusOK {
+						body, _ := io.ReadAll(resp.Body)
+						log.Printf("Failed to notify server about device %s: status %d, body: %s", 
+							deviceID, resp.StatusCode, string(body))
+					} else {
+						log.Printf("Successfully notified server about device %s", deviceID)
+					}
+				} else {
+					log.Printf("Error notifying server about device %s: %v", deviceID, err)
+				}
+			}
+		}()
+	}
+	
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
 }
 
 func postConfiguration(c *gin.Context) {
@@ -278,9 +324,6 @@ func postConfiguration(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Configuration updated successfully"})
 }
-
-
-
 
 func getConfiguration(c *gin.Context) {
 	generalConf, devicesConf, err := loadConf("devices.toml")

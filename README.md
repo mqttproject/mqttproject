@@ -36,6 +36,26 @@ npm ci
 npm start
 ```
 
+## Registration Flow
+
+1. Administrator creates a new simulator entry in the dashboard
+2. Dashboard generates a registration token
+3. Token is configured in the simulator's `devices.toml`
+4. On startup, the simulator sends this token to register with the server
+5. Server validates the token and establishes the connection
+6. Subsequent API calls do not require authentication
+
+## Development Notes
+
+- The simulator authenticates only once during registration
+- Token is required only for the initial connection
+- Communication after registration does not use authentication
+- The server identifies simulators by their UUID, not URL
+- UUID persistence allows simulators to change networks and maintain identity
+- The cleanup processes ensure UUID consistency and prevent duplicates
+- The registration process associates devices with the correct simulator UUID
+
+
 ### API Documentation
 The simulator includes an HTTP REST API that allows control via a separate web interface. For full details on the available endpoints and usage, please refer to the [manual](MANUAL.md).
 
